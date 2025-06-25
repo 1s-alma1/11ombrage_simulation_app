@@ -1,11 +1,12 @@
 import streamlit as st
+import plotly.graph_objects as go
 import math
 
 # --- CONFIG ---
 st.set_page_config(page_title="Simulation Ombres PV", layout="centered")
-st.title("🌤️ Simulation d’ombrage simple")
+st.title("🌞 Simulation simple d’ombrage photovoltaïque")
 
-st.markdown("Définissez les obstacles autour de votre installation photovoltaïque pour estimer les pertes liées à l’ombre.")
+st.markdown("Ajoutez les obstacles devant les panneaux (orientation plein sud) pour estimer les pertes d’énergie.")
 
 # --- ENTRÉES UTILISATEUR ---
 st.sidebar.header("🪵 Obstacles")
@@ -16,7 +17,7 @@ for i in range(nb_obstacles):
     with st.sidebar.expander(f"Obstacle #{i+1}", expanded=True):
         type_obs = st.selectbox("Type", ["Arbre", "Bâtiment", "Mur"], key=f"type{i}")
         hauteur = st.slider("Hauteur (m)", 1, 20, 5, key=f"haut{i}")
-        distance = st.slider("Distance (m)", -20, 40, 10, key=f"dist{i}")  # autoriser distance négative
+        distance = st.slider("Distance (m)", -20, 40, 10, key=f"dist{i}")  # Autorise obstacle derrière
         obstacles.append({
             "type": type_obs,
             "hauteur": hauteur,
@@ -47,12 +48,60 @@ def calcul_perte(obs_list):
 perte_pct = calcul_perte(obstacles)
 prod_corrigee = prod_brute * (1 - perte_pct / 100)
 
-# --- RÉSULTATS ---
+# --- AFFICHAGE DES RÉSULTATS ---
 st.subheader("📊 Résultats")
-st.write(f"**🌞 Production brute estimée :** `{prod_brute:.0f} kWh/an`")
-st.write(f"**🌫️ Pertes dues à l’ombrage :** `{perte_pct:.1f} %`")
-st.write(f"**⚡ Production corrigée estimée :** `{prod_corrigee:.0f} kWh/an`")
+st.write(f"**🌞 Production brute :** `{prod_brute:.0f} kWh/an`")
+st.write(f"**🌫️ Pertes d’ombrage :** `{perte_pct:.1f} %`")
+st.write(f"**⚡ Production corrigée :** `{prod_corrigee:.0f} kWh/an`")
+
+# --- VISUALISATION ---
+st.subheader("🖼️ Vue simplifiée (orientation sud)")
+
+fig = go.Figure()
+
+# Maison
+fig.add_trace(go.Scatter(
+    x=[0, 0],
+    y=[0, 6],
+    mode="lines+text",
+    line=dict(width=10, color="gray"),
+    text=["Maison"],
+    textposition="top right"
+))
+
+# Obstacles
+colors = ["green", "brown", "black"]
+for i, obs in enumerate(obstacles):
+    fig.add_trace(go.Scatter(
+        x=[obs["distance"], obs["distance"]],
+        y=[0, obs["hauteur"]],
+        mode="lines+text",
+        line=dict(width=6, color=colors[i % len(colors)]),
+        text=[f"{obs['type']} ({obs['hauteur']}m)"],
+        textposition="top center"
+    ))
+
+# Soleil positionné plein sud à midi
+fig.add_trace(go.Scatter(
+    x=[0],
+    y=[20],
+    mode="markers+text",
+    marker=dict(size=30, color="gold"),
+    text=["☀️ Soleil (Sud)"],
+    textposition="bottom center"
+))
+
+fig.update_layout(
+    height=400,
+    xaxis=dict(title="Distance (m)", range=[-25, 50]),
+    yaxis=dict(title="Hauteur (m)", range=[0, 25]),
+    plot_bgcolor="#f8f9fa",
+    paper_bgcolor="#ffffff",
+    margin=dict(l=40, r=40, t=40, b=40),
+    showlegend=False
+)
+
+st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-st.caption("Projet S8 – Simulation simplifiée d’ombrage – 2025")
-
+st.caption("Projet S8 – Attaibe Salma – Simulation simplifiée – 2025")
