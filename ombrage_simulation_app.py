@@ -4,7 +4,7 @@ import math
 
 # --- CONFIG ---
 st.set_page_config(page_title="Simulation Ombres PV", layout="centered")
-st.title("🏡 Simulation esthétique d’un système photovoltaïque résidentiel")
+st.title("🏡 Etude d'ombrage")
 
 st.markdown("Sélectionnez les obstacles pour visualiser leur impact sur l’ensoleillement, les pertes et la production d’énergie.")
 
