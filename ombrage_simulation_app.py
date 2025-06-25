@@ -4,112 +4,110 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-from matplotlib.animation import FuncAnimation
-import time
+import plotly.graph_objects as go
 
-st.set_page_config(page_title="🌞 Simulation Ombres PV", layout="wide")
-st.title("🏡 Simulation dynamique de l’effet d’ombrage sur un système photovoltaïque")
+# CONFIGURATION
+st.set_page_config(page_title="Simulation Ombres PV", layout="wide")
 st.markdown("""
-Cette application vous permet de simuler l'impact de différents obstacles (arbres, bâtiments...) sur la production d'énergie solaire d'une maison à Marseille.
+<style>
+    body {
+        background-color: #f2f6fc;
+    }
+    .main {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2, h3, .stSlider label, .stSelectbox label, .stRadio label {
+        color: #234;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-- 🏠 Maison orientée plein sud avec toiture inclinée à 30°.
-- ☀️ Simulation dynamique heure par heure du déplacement du soleil.
-- 🌳 Sélection des obstacles avec visualisation de l’ombre projetée.
+st.title("🏡 Simulation esthétique de l’ombrage solaire")
+st.write("""
+Cette application vous permet de **choisir les obstacles (type, hauteur)** pour observer leur **effet sur l’ombre projetée**, la **production solaire**, les **pertes** et le **rendement global**.
 """)
 
-# === ENTRÉES ===
-st.sidebar.header("🔧 Configuration de la simulation")
-nb_obstacles = st.sidebar.slider("Nombre d'obstacles", 0, 3, 1)
-
+# ENTRÉES UTILISATEUR
+st.sidebar.header("🌳 Obstacle(s)")
+nb_obstacles = st.sidebar.slider("Nombre d’obstacles", 0, 3, 1)
 obstacles = []
+
 for i in range(nb_obstacles):
-    with st.sidebar.expander(f"🚧 Obstacle #{i+1}"):
-        type_obs = st.selectbox(f"Type", ["Arbre", "Bâtiment", "Mur", "Colline"], key=f"type{i}")
+    with st.sidebar.expander(f"Obstacle #{i+1}", expanded=True):
+        type_obs = st.selectbox("Type", ["Arbre", "Bâtiment", "Mur"], key=f"type{i}")
         hauteur = st.slider("Hauteur (m)", 1, 20, 5, key=f"h{i}")
-        distance = st.slider("Distance (m)", 1, 50, 10, key=f"d{i}")
-        orientation = st.slider("Orientation (°)", -90, 90, 0, key=f"o{i}")
-        obstacles.append({"type": type_obs, "hauteur": hauteur, "distance": distance, "orientation": orientation})
+        distance = st.slider("Distance au panneau (m)", 1, 40, 10, key=f"d{i}")
+        obstacles.append({"type": type_obs, "hauteur": hauteur, "distance": distance})
 
-meteo = st.sidebar.radio("☁️ Conditions météo", ["Ensoleillé", "Nuageux", "Pluvieux"])
-nb_panneaux = st.sidebar.slider("Nombre de panneaux (400 Wc chacun)", 1, 25, 20)
-
-# === FACTEURS ===
+# CALCUL
 power_per_panel = 0.4  # kWc
-irradiation = 1824
+irradiation = 1824  # Marseille kWh/m²/an
 rendement = 0.85
-facteur_meteo = {"Ensoleillé": 1.0, "Nuageux": 0.75, "Pluvieux": 0.55}[meteo]
+nb_panneaux = 20
 kWp = nb_panneaux * power_per_panel
-prod_base = kWp * irradiation * rendement * facteur_meteo / 1000  # kWh/an
+prod_base = kWp * irradiation * rendement / 1000  # en kWh/an
 
-# === CALCUL PERTE D’OMBRAGE ===
-def calc_ombrage(obs, heure):
-    pertes = 0
-    angle_solaire = max(5, min(80, 90 - abs(12 - heure) * 6))  # approx simplifiée
+# Pertes d’ombrage simplifiées
+def pertes_ombrage(obs):
+    perte_totale = 0
     for o in obs:
-        angle_obs = math.degrees(math.atan(o["hauteur"] / o["distance"]))
-        if angle_obs > angle_solaire:
-            pertes += min(angle_obs / 90 * 20, 20)
-    return min(pertes, 50)
+        angle = math.degrees(math.atan(o['hauteur'] / o['distance']))
+        perte = min(angle / 90 * 25, 25)  # max 25% par obstacle
+        perte_totale += perte
+    return min(perte_totale, 60)
 
-# === ANIMATION DE L'OMBRE ===
-st.subheader("🎬 Animation heure par heure")
-fig, ax = plt.subplots(figsize=(10, 4))
-ax.set_xlim(0, 60)
-ax.set_ylim(0, 25)
-ax.set_xlabel("Distance depuis la maison (m)")
-ax.set_ylabel("Hauteur (m)")
+perte_pct = pertes_ombrage(obstacles)
+prod_corrigée = prod_base * (1 - perte_pct / 100)
 
-# Représentation de la maison
-ax.add_patch(plt.Rectangle((0, 0), 2, 6, color="gray", label="Maison"))
+# Résultats
+col1, col2, col3 = st.columns(3)
+col1.metric("🔆 Production brute", f"{prod_base:.0f} kWh/an")
+col2.metric("📉 Perte d’ombrage", f"{perte_pct:.1f}%")
+col3.metric("⚡ Production nette", f"{prod_corrigée:.0f} kWh/an")
 
-bars = []
-text = ax.text(45, 22, '', fontsize=12, color='blue')
+# VISUALISATION PLOTLY
+st.subheader("🖼️ Visualisation esthétique de l’ombrage")
+fig = go.Figure()
 
+# Maison
+fig.add_trace(go.Scatter(
+    x=[0, 0], y=[0, 6], mode='lines+text', line=dict(width=6),
+    text=["Maison"], textposition="top right",
+    name='Maison'))
+
+# Obstacles
+colors = ["green", "brown", "gray"]
 for i, obs in enumerate(obstacles):
-    b = ax.bar(obs["distance"], obs["hauteur"], color="brown", width=1, label=obs["type"])
-    bars.append(b[0])
+    fig.add_trace(go.Scatter(
+        x=[obs['distance'], obs['distance']],
+        y=[0, obs['hauteur']],
+        mode='lines+text',
+        line=dict(width=4, color=colors[i % len(colors)]),
+        text=[f"{obs['type']} ({obs['hauteur']}m)"],
+        textposition="top center",
+        name=f"Obstacle {i+1}"
+    ))
 
-@st.cache_resource(show_spinner=False)
-def animate_shadow():
-    images = []
-    for heure in range(6, 19):
-        ax.collections.clear()
-        for i, obs in enumerate(obstacles):
-            bar = bars[i]
-            bar.set_height(obs["hauteur"])
-            bar.set_x(obs["distance"])
-        angle_sun = max(5, min(80, 90 - abs(12 - heure) * 6))
-        text.set_text(f"☀️ Heure: {heure}h – Angle solaire: {angle_sun}°")
-        fig.canvas.draw()
-        images.append(fig)
-    return images
+# Soleil
+fig.add_trace(go.Scatter(
+    x=[-5], y=[20], mode='markers+text', marker=dict(size=30, color='gold'),
+    text=["☀️ Soleil"], textposition="bottom right", name="Soleil"
+))
 
-st.pyplot(fig)
+fig.update_layout(
+    xaxis=dict(title='Distance (m)', range=[-10, 50]),
+    yaxis=dict(title='Hauteur (m)', range=[0, 25]),
+    plot_bgcolor='#f0f2f6',
+    paper_bgcolor='#f9fbfe',
+    margin=dict(l=40, r=40, t=40, b=40),
+    height=400,
+    showlegend=False
+)
 
-# === CALCUL ÉNERGIE ===
-heure_actuelle = st.slider("Heure de la journée", 6, 18, 12)
-perte_ombrage = calc_ombrage(obstacles, heure_actuelle)
-prod_apres_ombre = prod_base * (1 - perte_ombrage / 100)
-
-conso = 8260
-autoconso = min(prod_apres_ombre, conso) * 0.9
-injection = max(0, prod_apres_ombre - autoconsommation)
-reprise = max(0, conso - autoconsommation)
-
-st.subheader("📊 Résultats énergétiques")
-st.metric("Production brute (kWh/an)", f"{prod_base:.0f}")
-st.metric("Perte ombrage à {heure_actuelle}h", f"{perte_ombrage:.1f}%")
-st.metric("Production réelle", f"{prod_apres_ombre:.0f} kWh/an")
-
-# === GRAPHIQUE ÉNERGIE ===
-fig2, ax2 = plt.subplots()
-labels = ["Autoconsommée", "Injectée", "Reprise"]
-values = [autoconso, injection, reprise]
-colors = ["green", "orange", "red"]
-ax2.bar(labels, values, color=colors)
-ax2.set_title("Répartition de l’énergie")
-ax2.set_ylabel("kWh/an")
-st.pyplot(fig2)
+st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-st.caption("Projet S8 – Attaibe Salma – Simulation dynamique d’ombrage – 2025")
+st.caption("Simulation esthétique – Projet S8 – Attaibe Salma – 2025")
