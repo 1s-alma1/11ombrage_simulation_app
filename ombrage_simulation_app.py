@@ -4,7 +4,7 @@ import math
 
 # --- CONFIG ---
 st.set_page_config(page_title="Simulation Ombres PV", layout="centered")
-st.title("🌞 Simulation simple d’ombrage photovoltaïque")
+st.title("🌞 Simulation d’ombrage photovoltaïque")
 
 st.markdown("Ajoutez les obstacles devant les panneaux (orientation plein sud) pour estimer les pertes d’énergie.")
 
@@ -104,4 +104,4 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-st.caption("Projet S8 – Attaibe Salma – Simulation simplifiée – 2025")
+st.caption("Projet S8 – Attaibe Salma – Simulation d'ombrage – 2025")
