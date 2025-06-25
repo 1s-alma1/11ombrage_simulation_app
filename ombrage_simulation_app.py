@@ -48,11 +48,17 @@ def calcul_perte(obs_list):
 perte_pct = calcul_perte(obstacles)
 prod_corrigee = prod_brute * (1 - perte_pct / 100)
 
-# --- AFFICHAGE DES RÉSULTATS ---
+# --- AFFICHAGE DES RÉSULTATS (Version esthétique) ---
 st.subheader("📊 Résultats")
-st.write(f"**🌞 Production brute :** `{prod_brute:.0f} kWh/an`")
-st.write(f"**🌫️ Pertes d’ombrage :** `{perte_pct:.1f} %`")
-st.write(f"**⚡ Production corrigée :** `{prod_corrigee:.0f} kWh/an`")
+
+st.markdown("""
+<div style="background-color: #f0f4f8; padding: 20px; border-radius: 10px; font-size: 18px; color: #333;">
+    <b>🌞 Production brute estimée :</b> <span style="font-size: 22px; color: green;"><b>{:.0f} kWh/an</b></span><br><br>
+    <b>🌫️ Pertes dues à l’ombrage :</b> <span style="font-size: 22px; color: orange;"><b>{:.1f} %</b></span><br><br>
+    <b>⚡ Production corrigée estimée :</b> <span style="font-size: 22px; color: blue;"><b>{:.0f} kWh/an</b></span>
+</div>
+""".format(prod_brute, perte_pct, prod_corrigee), unsafe_allow_html=True)
+
 
 # --- VISUALISATION ---
 st.subheader("🖼️ Vue simplifiée (orientation sud)")
