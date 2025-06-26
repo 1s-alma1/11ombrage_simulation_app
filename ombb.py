@@ -8,10 +8,8 @@ st.title("🌞 Simulation d’ombrage photovoltaïque")
 
 st.markdown("Définissez les obstacles devant vos panneaux (orientés plein sud à Marseille) pour estimer les pertes de production.")
 
-# --- SÉLECTION DU TYPE DE PANNEAU ---
-type_panneau = st.selectbox("🔧 Type de panneau solaire", [
-    "Monocristallin", "Polycristallin", "Amorphe", "Hétérojonction", "Bifacial"
-])
+# --- TYPE DE PANNEAU (fixé) ---
+type_panneau = "Monocristallin"  # Fixé par défaut
 
 # --- ENTRÉES OBSTACLES ---
 st.sidebar.header("🪵 Obstacles")
@@ -58,7 +56,7 @@ st.subheader("📊 Résultats de simulation")
 
 st.markdown(f"""
 <div style="background-color: #f0f4f8; padding: 20px; border-radius: 10px; font-size: 18px; color: #333;">
-    <b>🔋 Type de panneau sélectionné :</b> <span style="font-size: 20px;">{type_panneau}</span><br><br>
+    <b>🔋 Type de panneau utilisé :</b> <span style="font-size: 20px;">{type_panneau}</span><br><br>
     <b>🌞 Production brute estimée :</b> <span style="font-size: 22px; color: green;"><b>{prod_brute:.0f} kWh/an</b></span><br><br>
     <b>🌫️ Pertes dues à l’ombrage :</b> <span style="font-size: 22px; color: orange;"><b>{perte_pct:.1f} %</b></span><br><br>
     <b>⚡ Production corrigée estimée :</b> <span style="font-size: 22px; color: blue;"><b>{prod_corrigee:.0f} kWh/an</b></span>
@@ -116,3 +114,4 @@ st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
 st.caption("Projet S8 – Attaibe Salma – Simulation d’ombrage photovoltaïque – 2025")
+
