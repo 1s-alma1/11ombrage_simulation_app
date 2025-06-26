@@ -6,7 +6,7 @@ import math
 st.set_page_config(page_title="Simulation Ombres PV", layout="centered")
 st.title("🌞 Simulation d’ombrage photovoltaïque")
 
-st.markdown("Définissez les obstacles devant vos panneaux (orientés plein sud à Marseille) pour estimer les pertes de production.")
+st.markdown("Choisir jusqu'à 3 obstacles, Soleil:(orientés plein sud à Marseille) pour estimer les pertes de production.")
 
 # --- TYPE DE PANNEAU (fixé) ---
 type_panneau = "Monocristallin"  # Fixé par défaut
